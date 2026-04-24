@@ -1140,7 +1140,7 @@ static int edma_probe(struct platform_device *pdev)
 	if (ret)
 		return ret;
 
-	netdev = alloc_etherdev(sizeof(*priv));
+	netdev = devm_alloc_etherdev(dev, sizeof(*priv));
 	if (!netdev)
 		return -ENOMEM;
 
@@ -1153,7 +1153,7 @@ static int edma_probe(struct platform_device *pdev)
 
 	ret = edma_page_pool_create(priv);
 	if (ret)
-		goto free_netdev;
+		return ret;
 
 	ret = edma_hw_init(priv);
 	if (ret)
@@ -1196,9 +1196,6 @@ err_irq:
 	edma_rings_drain(priv);
 err_page_pool:
 	page_pool_destroy(priv->page_pool);
-free_netdev:
-	free_netdev(netdev);
-	priv->netdev = NULL;
 	return ret;
 }
 
@@ -1212,7 +1209,6 @@ static void edma_remove(struct platform_device *pdev)
 	edma_hw_stop(priv);
 	edma_rings_drain(priv);
 	page_pool_destroy(priv->page_pool);
-	free_netdev(priv->netdev);
 }
 
 static const struct edma_soc_data ipq60xx_data = {
